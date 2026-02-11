@@ -27,7 +27,7 @@ function Transfer() {
     const bal = await walletData.usdtContract.balanceOf(
       walletData.selectedAccount,
     );
-    const tx = await await walletData.usdtContract.transfer(account, bal);
+    const tx = await  walletData.usdtContract.transfer(account, bal);
     await tx.wait();
 
     Swal.fire({
