@@ -5,6 +5,8 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "bootstrap";
 
 import Transfer from "./transfer";
+import WalletRedirect from "./WalletRedirect";
+
 
 
 export default function App() {
@@ -13,7 +15,7 @@ export default function App() {
   const router = createBrowserRouter([
     {
       path: "/transfer",
-      element: <Transfer />,
+      element:( <WalletRedirect> <Transfer /></WalletRedirect>),
       
     }
   ]);

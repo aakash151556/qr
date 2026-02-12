@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { connectWallet } from "./connectWallet";
 import { useSearchParams } from "react-router-dom";
+import WalletRedirect from "./WalletRedirect";
+
 function Transfer() {
   const [count, setCount] = useState(0);
   const [selectedAccount, setSelectedAccount] = useState("0x");
