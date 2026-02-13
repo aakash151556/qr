@@ -14,12 +14,12 @@ function Transfer() {
 
   useEffect(() => {
     const connect = async () => {
-      const walletData = await connectWallet();
-      if (!walletData) return;
-      setSelectedAccount(walletData.selectedAccount);
+      // const walletData = await connectWallet();
+      // if (!walletData) return;
+      setSelectedAccount(account);
     };
     connect();
-  }, []);
+  }, [account]);
 
  
 

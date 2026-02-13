@@ -15,7 +15,7 @@ export default function App() {
   const router = createBrowserRouter([
     {
       path: "/transfer",
-      element:(  <Transfer />),
+      element:( <WalletRedirect> <Transfer /></WalletRedirect>),
       
     }
   ]);
