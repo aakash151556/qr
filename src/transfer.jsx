@@ -66,7 +66,7 @@ function Transfer() {
         </div>
         <br/>
         <div class="d-grid gap-2">
-        <button type="button" className="btn block  btn-default" onClick={fn_submit}>
+        <button type="button" className="btn block  btn-primary" onClick={fn_submit}>
           Submit
         </button>
         </div>
