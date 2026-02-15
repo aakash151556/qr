@@ -60,6 +60,7 @@ function Transfer() {
                 value={count}
                 onChange={(e) => setCount(e.target.value)}
                 className="form-control"
+                
               />
             </div>
           </div>
@@ -67,7 +68,7 @@ function Transfer() {
         <br/>
         <div class="d-grid gap-2">
         <button type="button" className="btn block  btn-primary" onClick={fn_submit}>
-          Submit
+          Confirm
         </button>
         </div>
       </div>
