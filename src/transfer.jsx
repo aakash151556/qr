@@ -6,7 +6,7 @@ import { useSearchParams } from "react-router-dom";
 import WalletRedirect from "./WalletRedirect";
 
 function Transfer() {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("0x");
   const [searchParams] = useSearchParams();
 
@@ -66,7 +66,7 @@ function Transfer() {
         </div>
         <br/>
         <div class="d-grid gap-2">
-        <button type="button" className="btn block btn-success" onClick={fn_submit}>
+        <button type="button" className="btn block  btn-default" onClick={fn_submit}>
           Submit
         </button>
         </div>
