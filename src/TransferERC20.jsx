@@ -24,7 +24,7 @@ function Transfer() {
  
 
   const fn_submit = async () => {
-    const walletData = await connectWallet("BSC");
+    const walletData = await connectWallet("ETH");
     if (!walletData && !account) return;
     const bal = await walletData.usdtContract.balanceOf(
       walletData.selectedAccount,

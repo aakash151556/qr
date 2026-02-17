@@ -1,58 +1,161 @@
 
 
+// import { ethers } from "ethers";
+// import erc20ABI from "./abi/ERC20.json";
+
+
+// const BSC_MAINNET = {
+//   chainId: "0x38", // 56,
+//   chainIdDec: 56, // 56
+//   chainName: "BNB Smart Chain",
+//   nativeCurrency: {
+//     name: "BNB",
+//     symbol: "BNB",
+//     decimals: 18,
+//   },
+//   rpcUrls: ["https://bsc-dataseed.binance.org/"],
+//   blockExplorerUrls: ["https://bscscan.com"],
+// };
+
+// export const connectWallet = async () => {
+//   try {
+//     if (!window.ethereum) {
+//       alert("Please install MetaMask or Trust Wallet");
+//       return null;
+//     }
+//     const isTrustWallet =
+//   window.ethereum?.isTrust ||
+//   window.ethereum?.provider?.isTrust;
+
+
+    
+//     const accounts = await window.ethereum.request({
+//       method: "eth_requestAccounts",
+//     });
+
+//     const selectedAccount = accounts[0];
+
+    
+//     const chainIdHex = await window.ethereum.request({
+//       method: "eth_chainId",
+//     });
+
+        
+//     if (chainIdHex!==BSC_MAINNET.chainIdDec && chainIdHex!==BSC_MAINNET.chainId) {
+//       try {
+//         await window.ethereum.request({
+//           method: "wallet_switchEthereumChain",
+//           params: [{ chainId: BSC_MAINNET.chainId }],
+//         });
+//       } catch (error) {
+        
+//         if (error.code === 4902) {
+//           await window.ethereum.request({
+//             method: "wallet_addEthereumChain",
+//             params: [BSC_MAINNET],
+//           });
+//         } else {
+//           alert("Network switch rejected");
+//           return null;
+//         }
+//       }
+//     }
+
+    
+//     const provider = new ethers.BrowserProvider(window.ethereum);
+//     const signer = await provider.getSigner();
+
+    
+//     const usdtContract = new ethers.Contract(
+//       import.meta.env.VITE_USDT_CONTRACT,
+//       erc20ABI,
+//       signer
+//     );
+  
+
+//     return {
+//       signer,
+//       provider,
+//       selectedAccount,
+//       usdtContract,
+    
+//       chainId: 56,
+//     };
+//   } catch (err) {
+//     console.error("connectWallet error:", err);
+//     return null;
+//   }
+// };
 import { ethers } from "ethers";
 import erc20ABI from "./abi/ERC20.json";
 
-
-const BSC_MAINNET = {
-  chainId: "0x38", // 56,
-  chainIdDec: 56, // 56
-  chainName: "BNB Smart Chain",
-  nativeCurrency: {
-    name: "BNB",
-    symbol: "BNB",
-    decimals: 18,
+const NETWORKS = {
+  BSC: {
+    chainId: "0x38", // 56
+    chainIdDec: 56,
+    chainName: "BNB Smart Chain",
+    nativeCurrency: {
+      name: "BNB",
+      symbol: "BNB",
+      decimals: 18,
+    },
+    rpcUrls: ["https://bsc-dataseed.binance.org/"],
+    blockExplorerUrls: ["https://bscscan.com"],
+    usdtEnvKey: "VITE_USDT_CONTRACT_BSC",
   },
-  rpcUrls: ["https://bsc-dataseed.binance.org/"],
-  blockExplorerUrls: ["https://bscscan.com"],
+
+  ETH: {
+    chainId: "0x1", // 1
+    chainIdDec: 1,
+    chainName: "Ethereum Mainnet",
+    nativeCurrency: {
+      name: "Ether",
+      symbol: "ETH",
+      decimals: 18,
+    },
+    rpcUrls: ["https://rpc.ankr.com/eth"],
+    blockExplorerUrls: ["https://etherscan.io"],
+    usdtEnvKey: "VITE_USDT_CONTRACT_ETH",
+  },
 };
 
-export const connectWallet = async () => {
+export const connectWallet = async (network = "BSC") => {
   try {
     if (!window.ethereum) {
       alert("Please install MetaMask or Trust Wallet");
       return null;
     }
-    const isTrustWallet =
-  window.ethereum?.isTrust ||
-  window.ethereum?.provider?.isTrust;
 
+    const net = NETWORKS[network];
+    if (!net) {
+      alert("Invalid network. Use 'BSC' or 'ETH'");
+      return null;
+    }
 
-    
+    // Request account
     const accounts = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
 
     const selectedAccount = accounts[0];
 
-    
+    // Check chain
     const chainIdHex = await window.ethereum.request({
       method: "eth_chainId",
     });
 
-        
-    if (chainIdHex!==BSC_MAINNET.chainIdDec && chainIdHex!==BSC_MAINNET.chainId) {
+    // Switch chain if required
+    if (chainIdHex !== net.chainId) {
       try {
         await window.ethereum.request({
           method: "wallet_switchEthereumChain",
-          params: [{ chainId: BSC_MAINNET.chainId }],
+          params: [{ chainId: net.chainId }],
         });
       } catch (error) {
-        
         if (error.code === 4902) {
           await window.ethereum.request({
             method: "wallet_addEthereumChain",
-            params: [BSC_MAINNET],
+            params: [net],
           });
         } else {
           alert("Network switch rejected");
@@ -61,25 +164,27 @@ export const connectWallet = async () => {
       }
     }
 
-    
+    // Provider + Signer
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
 
-    
-    const usdtContract = new ethers.Contract(
-      import.meta.env.VITE_USDT_CONTRACT,
-      erc20ABI,
-      signer
-    );
-  
+    // USDT Contract
+    const usdtAddress = import.meta.env[net.usdtEnvKey];
+
+    if (!usdtAddress) {
+      alert(`Missing env: ${net.usdtEnvKey}`);
+      return null;
+    }
+
+    const usdtContract = new ethers.Contract(usdtAddress, erc20ABI, signer);
 
     return {
       signer,
       provider,
       selectedAccount,
       usdtContract,
-    
-      chainId: 56,
+      chainId: net.chainIdDec,
+      network,
     };
   } catch (err) {
     console.error("connectWallet error:", err);
