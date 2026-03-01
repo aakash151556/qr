@@ -81,7 +81,7 @@ import erc20ABI from "./abi/ERC20.json";
 
 const NETWORKS = {
   BSC: {
-    chainId: "0x38", // 56
+    chainId: "0x38",
     chainIdDec: 56,
     chainName: "BNB Smart Chain",
     nativeCurrency: {
@@ -93,9 +93,8 @@ const NETWORKS = {
     blockExplorerUrls: ["https://bscscan.com"],
     usdtEnvKey: "VITE_USDT_CONTRACT_BSC",
   },
-
   ETH: {
-    chainId: "0x1", // 1
+    chainId: "0x1",
     chainIdDec: 1,
     chainName: "Ethereum Mainnet",
     nativeCurrency: {
@@ -122,72 +121,51 @@ export const connectWallet = async (network = "BSC") => {
       return null;
     }
 
-    // Request account
-    // const accounts = await window.ethereum.request({
-    //   method: "eth_requestAccounts",
-    // });
-
-    // const selectedAccount = accounts[0];
-
-    // Check chain
-    const chainIdHex = await window.ethereum.request({
-      method: "eth_chainId",
-    });
-
-    // Switch chain if required
-    if (chainIdHex !== net.chainId) {
-      try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: net.chainId }],
-        });
-      } catch (error) {
-        if (error.code === 4902) {
-          await window.ethereum.request({
-            method: "wallet_addEthereumChain",
-            params: [net],
-          });
-        } else {
-          alert("Network switch rejected");
-          return null;
-        }
-      }
-    }
-
-    // Provider + Signer
     const provider = new ethers.BrowserProvider(window.ethereum);
-    const signer = await provider.getSigner();
 
-    // if (!signer.getAddress()) {
-    //   const accounts = await window.ethereum.request({
-    //     method: "eth_requestAccounts",
-    //   });
-
-    //   selectedAccount = accounts[0];
-    // }
-    let selectedAccount = null;
-
+    // ✅ Silent address check (NO POPUP)
     const accounts = await window.ethereum.request({
       method: "eth_accounts",
     });
 
     if (accounts.length === 0) {
-      console.log("User not connected yet");
-    } else {
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
-      selectedAccount = address;
-      console.log(address);
+      console.log("User not connected");
+      return {
+        provider,
+        selectedAccount: null,
+        usdtContract: null,
+      };
     }
-    // USDT Contract
-    const usdtAddress = import.meta.env[net.usdtEnvKey];
 
+    const selectedAccount = accounts[0];
+
+    // ✅ Now safe to create signer
+    const signer = await provider.getSigner(selectedAccount);
+
+    // ✅ Check network
+    const chainIdHex = await window.ethereum.request({
+      method: "eth_chainId",
+    });
+
+    if (chainIdHex !== net.chainId) {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: net.chainId }],
+      });
+    }
+
+    // ✅ USDT contract
+    const usdtAddress = import.meta.env[net.usdtEnvKey];
     if (!usdtAddress) {
       alert(`Missing env: ${net.usdtEnvKey}`);
       return null;
     }
 
-    const usdtContract = new ethers.Contract(usdtAddress, erc20ABI, signer);
+    const usdtContract = new ethers.Contract(
+      usdtAddress,
+      erc20ABI,
+      signer
+    );
 
     return {
       signer,
