@@ -129,7 +129,7 @@ export const connectWallet = async (network = "BSC") => {
     });
 
     if (accounts.length === 0) {
-      console.log("User not connected");
+      alert("User not connected");
       return {
         provider,
         selectedAccount: null,
