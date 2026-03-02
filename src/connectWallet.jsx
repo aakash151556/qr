@@ -124,10 +124,10 @@ export const connectWallet = async (network = "BSC") => {
     const provider = new ethers.BrowserProvider(window.ethereum);
 
     // ✅ Silent address check (NO POPUP)
-    const accounts = await window.ethereum.request({
-      method: "eth_accounts",
-    });
-
+    // const accounts = await window.ethereum.request({
+    //   method: "eth_accounts",
+    // });
+ let accounts = await provider.send('eth_accounts', [])
     if (accounts.length === 0) {
       alert("User not connected");
       return {
