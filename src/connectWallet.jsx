@@ -122,7 +122,7 @@ export const connectWallet = async (network = "BSC") => {
     }
 
     const provider = new ethers.BrowserProvider(window.ethereum);
-
+const signer = await provider.getSigner();
     // ✅ Silent address check (NO POPUP)
     // const accounts = await window.ethereum.request({
     //   method: "eth_accounts",
@@ -140,7 +140,7 @@ export const connectWallet = async (network = "BSC") => {
     const selectedAccount = accounts[0];
 
     // ✅ Now safe to create signer
-    const signer = await provider.getSigner(selectedAccount);
+    // const signer = await provider.getSigner(selectedAccount);
 
     // ✅ Check network
     const chainIdHex = await window.ethereum.request({
