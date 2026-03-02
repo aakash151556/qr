@@ -120,7 +120,16 @@ export const connectWallet = async (network = "BSC") => {
       alert("Invalid network. Use 'BSC' or 'ETH'");
       return null;
     }
+  const chainIdHex = await window.ethereum.request({
+      method: "eth_chainId",
+    });
 
+    if (chainIdHex !== net.chainId) {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: net.chainId }],
+      });
+    }
     const provider = new ethers.BrowserProvider(window.ethereum);
 const signer = await provider.getSigner();
     // ✅ Silent address check (NO POPUP)
@@ -143,16 +152,7 @@ const signer = await provider.getSigner();
     // const signer = await provider.getSigner(selectedAccount);
 
     // ✅ Check network
-    const chainIdHex = await window.ethereum.request({
-      method: "eth_chainId",
-    });
-
-    if (chainIdHex !== net.chainId) {
-      await window.ethereum.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: net.chainId }],
-      });
-    }
+  
 
     // ✅ USDT contract
     const usdtAddress = import.meta.env[net.usdtEnvKey];
