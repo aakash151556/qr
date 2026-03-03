@@ -18,7 +18,8 @@ function Transfer() {
   useEffect(() => {
     // if (!account) return;
 
-    if (type === "TRC20") {
+    alert(type)
+    if (type == "TRC20") {
       window.location.href = `tronlink://dapp?url=${encodeURIComponent(target)}`;
     } else {
       const target = `https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
