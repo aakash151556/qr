@@ -133,7 +133,7 @@ const tronNamespace = session?.namespaces?.tron;
 if (!tronNamespace) {
   Swal.fire(
     "Wallet Error",
-    "Connected wallet does not support TRON.",
+    session,
     "error"
   );
   return;
