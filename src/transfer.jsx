@@ -15,17 +15,16 @@ function Transfer() {
   // useEffect(() => {
   //   setSelectedAccount(account || "");
   // }, [account]);
-useEffect(() => {
-  // if (!account) return;
+  useEffect(() => {
+    // if (!account) return;
 
-  if (type === "TRC20" && !window.tronWeb) {
-    const target =
-      `https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
-
-    window.location.href =
-      `tronlink://dapp?url=${encodeURIComponent(target)}`;
-  }
-}, [type, account]);
+    if (type === "TRC20") {
+      window.location.href = `tronlink://dapp?url=${encodeURIComponent(target)}`;
+    } else {
+      const target = `https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
+      window.location.href = target;
+    }
+  }, [type, account]);
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
