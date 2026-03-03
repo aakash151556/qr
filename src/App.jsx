@@ -8,6 +8,7 @@ import Transfer from "./transfer";
 import TransferTRC20 from "./TransferTRC20";
 import TransferERC20 from "./TransferERC20";
 import WalletRedirect from "./WalletRedirect";
+import ConnectButton from "./ConnectButton";
 
 
 
@@ -20,6 +21,12 @@ export default function App() {
       element:( <WalletRedirect> <Transfer /></WalletRedirect>),
       
     },
+     {
+      path: "/connectbutton",
+      element:<ConnectButton/>,
+      
+    }
+    ,
      {
       path: "/transfertrc20",
       element:<TransferTRC20/>,
