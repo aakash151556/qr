@@ -18,13 +18,13 @@ function Transfer() {
   useEffect(() => {
     // if (!account) return;
 
-    alert(type)
-    if (type == "TRC20") {
+    // alert(type)
+    // if (type == "TRC20") {
       window.location.href = `tronlink://dapp?url=${encodeURIComponent(target)}`;
-    } else {
-      const target = `https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
-      window.location.href = target;
-    }
+    // } else {
+    //   const target = `https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
+    //   window.location.href = target;
+    // }
   }, [type, account]);
   const handlePaste = async () => {
     try {
