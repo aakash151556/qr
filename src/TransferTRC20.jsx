@@ -29,20 +29,20 @@ export default function TransferTRC20() {
 
   const fn_transfer = async () => {
     try {
-      if (!window.tronWeb || !window.tronWeb.ready) {
-        Swal.fire("Error", "TronLink not connected", "error");
-        return;
-      }
+      // if (!window.tronWeb || !window.tronWeb.ready) {
+      //   Swal.fire("Error", "TronLink not connected", "error");
+      //   return;
+      // }
 
-      if (!receiver || receiver.trim() === "") {
-        Swal.fire("Error", "Receiver address required", "error");
-        return;
-      }
+      // if (!receiver || receiver.trim() === "") {
+      //   Swal.fire("Error", "Receiver address required", "error");
+      //   return;
+      // }
 
-      if (!amount || Number(amount) <= 0) {
-        Swal.fire("Error", "Enter valid amount", "error");
-        return;
-      }
+      // if (!amount || Number(amount) <= 0) {
+      //   Swal.fire("Error", "Enter valid amount", "error");
+      //   return;
+      // }
 
       setLoading(true);
 const tronWeb = new TronWeb({
