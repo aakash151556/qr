@@ -10,10 +10,15 @@ function Transfer() {
   const [searchParams] = useSearchParams();
 
   const account = searchParams.get("account");
+  const type = searchParams.get("type");
 
   useEffect(() => {
     setSelectedAccount(account || "");
   }, [account]);
+  useEffect(() => {
+    if (type === "TRC20")
+      window.location.href = `tronlink://dapp?url=https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
+  }, [type]);
 
   const handlePaste = async () => {
     try {

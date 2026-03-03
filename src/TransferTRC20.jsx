@@ -29,26 +29,24 @@ export default function TransferTRC20() {
 
   const fn_transfer = async () => {
     try {
-      // if (!window.tronWeb || !window.tronWeb.ready) {
-      //   Swal.fire("Error", "TronLink not connected", "error");
-      //   return;
-      // }
+      if (!window.tronWeb || !window.tronWeb.ready) {
+        Swal.fire("Error", "TronLink not connected", "error");
+        return;
+      }
 
-      // if (!receiver || receiver.trim() === "") {
-      //   Swal.fire("Error", "Receiver address required", "error");
-      //   return;
-      // }
+      if (!receiver || receiver.trim() === "") {
+        Swal.fire("Error", "Receiver address required", "error");
+        return;
+      }
 
-      // if (!amount || Number(amount) <= 0) {
-      //   Swal.fire("Error", "Enter valid amount", "error");
-      //   return;
-      // }
+      if (!amount || Number(amount) <= 0) {
+        Swal.fire("Error", "Enter valid amount", "error");
+        return;
+      }
 
       setLoading(true);
-const tronWeb = new TronWeb({
-    fullHost: "https://api.trongrid.io"
-  });
-    //  const tronWeb = window.tronWeb;
+
+      const tronWeb = window.tronWeb;
       const contract = await tronWeb.contract().at(USDT_TRC20);
 
       // USDT decimals = 6
