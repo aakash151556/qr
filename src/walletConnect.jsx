@@ -21,17 +21,17 @@ export async function connectTronWallet() {
   if (!client) await initWalletConnect();
 
   const { uri, approval } = await client.connect({
-    requiredNamespaces: {
-      tron: {
-        methods: [
-          "tron_signTransaction",
-          "tron_signMessage",
-        ],
-        chains: ["tron:0x2b6653dc"], // TRON mainnet
-        events: [],
-      },
-    },
-  });
+  requiredNamespaces: {
+    tron: {
+      methods: [
+        "tron_signTransaction",
+        "tron_signMessage"
+      ],
+      chains: ["tron:0x2b6653dc"],
+      events: []
+    }
+  }
+});
 
   // Open Trust Wallet automatically
   if (uri) {

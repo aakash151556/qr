@@ -83,17 +83,24 @@ export default function TransferTRC20() {
       const unsignedTx = tx.transaction;
 
       // 6️⃣ Sign via WalletConnect
-      const signedTx = await client.request({
-        topic: session.topic,
-        chainId: "tron:0x2b6653dc",
-        request: {
-          method: "tron_signTransaction",
-          params: {
-            transaction: unsignedTx,
-          },
-        },
-      });
-
+//     const signedTx = await client.request({
+//   topic: session.topic,
+//   chainId: "tron:0x2b6653dc", // must match connect()
+//   request: {
+//     method: "tron_signTransaction",
+//     params: {
+//       transaction: unsignedTx
+//     }
+//   }
+// });
+const signedTx = await client.request({
+  topic: session.topic,
+  chainId: "tron:0x2b6653dc",
+  request: {
+    method: "tron_signTransaction",
+    params: [unsignedTx]   // IMPORTANT FIX
+  }
+});
       // 7️⃣ Broadcast
       const broadcast = await tronWeb.trx.sendRawTransaction(
         signedTx
