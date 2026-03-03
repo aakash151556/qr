@@ -40,7 +40,7 @@ export async function connectTronWallet() {
   }
 
   session = await approval();
-  return session;
+  return {client, session};
 }
 
 export function getTronAddress() {

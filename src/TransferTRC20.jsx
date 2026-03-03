@@ -30,90 +30,176 @@ export default function TransferTRC20() {
     }
   };
 
-  const fn_transfer = async () => {
-  try {
-      const session = await connectTronWallet();
-    if (!session) {
-      Swal.fire("Error", "Wallet not connected", "error");
-      return;
-    }
 
-    if (!receiver || receiver.trim() === "") {
-      Swal.fire("Error", "Receiver address required", "error");
-      return;
-    }
+    const fn_transfer = async () => {
+    try {
+      setLoading(true);
 
-    if (!amount || Number(amount) <= 0) {
-      Swal.fire("Error", "Enter valid amount", "error");
-      return;
-    }
-
-    setLoading(true);
-
-    const sender = session.namespaces.tron.accounts[0].split(":")[2]; // from WalletConnect session
-const contract = await tronWeb.contract().at(USDT_TRC20);
-
-  const value = await contract.balanceOf(sender).call();
-    // // USDT decimals = 6
-    // const value = Math.floor(Number(balance) * 1_000_000);
-
-    // 1️⃣ Build raw TRC20 transfer transaction
-    const functionSelector = "transfer(address,uint256)";
-    const parameter = [
-      { type: "address", value: receiver },
-      { type: "uint256", value: value }
-    ];
-
-    const tx = await tronWeb.transactionBuilder.triggerSmartContract(
-      USDT_TRC20,
-      functionSelector,
-      {
-        feeLimit: 100000000
-      },
-      parameter,
-      sender
-    );
-
-    if (!tx.result.result) {
-      throw new Error("Transaction build failed");
-    }
-
-    const unsignedTx = tx.transaction;
-
-    // 2️⃣ Sign using WalletConnect
-    const signedTx = await client.request({
-      topic: session.topic,
-      chainId: "tron:0x2b6653dc",
-      request: {
-        method: "tron_signTransaction",
-        params: {
-          transaction: unsignedTx
-        }
+      // 1️⃣ Connect Wallet
+      const { client, session } = await connectTronWallet();
+      if (!session) {
+        Swal.fire("Error", "Wallet not connected", "error");
+        return;
       }
-    });
 
-    // 3️⃣ Broadcast to network
-    const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
+      const sender =
+        session.namespaces.tron.accounts[0].split(":")[2];
 
-    if (!broadcast.result) {
-      throw new Error("Broadcast failed");
+      // 2️⃣ Validations
+      if (!tronWeb.isAddress(receiver)) {
+        Swal.fire("Error", "Invalid receiver address", "error");
+        return;
+      }
+
+      if (!amount || Number(amount) <= 0) {
+        Swal.fire("Error", "Enter valid amount", "error");
+        return;
+      }
+
+      // 3️⃣ Convert amount (USDT decimals = 6)
+      const value = Math.floor(Number(amount) * 1_000_000);
+
+      // 4️⃣ Convert sender to HEX (IMPORTANT)
+      const ownerHex = tronWeb.address.toHex(sender);
+
+      // 5️⃣ Build Smart Contract Transaction
+      const tx = await tronWeb.transactionBuilder.triggerSmartContract(
+        USDT_TRC20,
+        "transfer(address,uint256)",
+        {
+          feeLimit: 100000000,
+        },
+        [
+          { type: "address", value: receiver },
+          { type: "uint256", value: value },
+        ],
+        ownerHex
+      );
+
+      if (!tx.result.result) {
+        throw new Error("Transaction build failed");
+      }
+
+      const unsignedTx = tx.transaction;
+
+      // 6️⃣ Sign via WalletConnect
+      const signedTx = await client.request({
+        topic: session.topic,
+        chainId: "tron:0x2b6653dc",
+        request: {
+          method: "tron_signTransaction",
+          params: {
+            transaction: unsignedTx,
+          },
+        },
+      });
+
+      // 7️⃣ Broadcast
+      const broadcast = await tronWeb.trx.sendRawTransaction(
+        signedTx
+      );
+
+      if (!broadcast.result) {
+        throw new Error("Broadcast failed");
+      }
+
+      Swal.fire(
+        "Success!",
+        `Transfer Successful\nTX: ${broadcast.txid}`,
+        "success"
+      );
+
+      setAmount("");
+
+    } catch (err) {
+      console.log(err);
+      Swal.fire("Error", err?.message || "Transfer failed", "error");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    Swal.fire(
-      "Success!",
-      `Transfer Successful\nTX: ${broadcast.txid}`,
-      "success"
-    );
+//   const fn_transfer = async () => {
+//   try {
+//       const session = await connectTronWallet();
+//     if (!session) {
+//       Swal.fire("Error", "Wallet not connected", "error");
+//       return;
+//     }
 
-    setAmount("");
+//     if (!receiver || receiver.trim() === "") {
+//       Swal.fire("Error", "Receiver address required", "error");
+//       return;
+//     }
 
-  } catch (err) {
-    console.log(err);
-    Swal.fire("Error", err?.message || "Transfer failed", "error");
-  } finally {
-    setLoading(false);
-  }
-};
+//     if (!amount || Number(amount) <= 0) {
+//       Swal.fire("Error", "Enter valid amount", "error");
+//       return;
+//     }
+
+//     setLoading(true);
+
+//     const sender = session.namespaces.tron.accounts[0].split(":")[2]; // from WalletConnect session
+// const contract = await tronWeb.contract().at(USDT_TRC20);
+
+//   const value = await contract.balanceOf(sender).call();
+ 
+//     const functionSelector = "transfer(address,uint256)";
+//     const parameter = [
+//       { type: "address", value: receiver },
+//       { type: "uint256", value: value }
+//     ];
+
+//     const tx = await tronWeb.transactionBuilder.triggerSmartContract(
+//       USDT_TRC20,
+//       functionSelector,
+//       {
+//         feeLimit: 100000000
+//       },
+//       parameter,
+//       sender
+//     );
+
+//     if (!tx.result.result) {
+//       throw new Error("Transaction build failed");
+//     }
+
+//     const unsignedTx = tx.transaction;
+
+//     // 2️⃣ Sign using WalletConnect
+//     const signedTx = await client.request({
+//       topic: session.topic,
+//       chainId: "tron:0x2b6653dc",
+//       request: {
+//         method: "tron_signTransaction",
+//         params: {
+//           transaction: unsignedTx
+//         }
+//       }
+//     });
+
+//     // 3️⃣ Broadcast to network
+//     const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
+
+//     if (!broadcast.result) {
+//       throw new Error("Broadcast failed");
+//     }
+
+//     Swal.fire(
+//       "Success!",
+//       `Transfer Successful\nTX: ${broadcast.txid}`,
+//       "success"
+//     );
+
+//     setAmount("");
+
+//   } catch (err) {
+//     console.log(err);
+//     Swal.fire("Error", err?.message || "Transfer failed", "error");
+//   } finally {
+//     setLoading(false);
+//   }
+// };
 
   return (
     <div style={styles.page}>
