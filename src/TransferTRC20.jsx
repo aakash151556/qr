@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 
-const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+const USDT_TRC20 = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+const REQUIRED_NETWORK = "Mainnet"; // change if using Nile
 
 export default function TransferTRC20() {
   const [tronWeb, setTronWeb] = useState(null);
-  const [address, setAddress] = useState("");
-  const [balance, setBalance] = useState("0");
+  const [walletAddress, setWalletAddress] = useState("");
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
+  const [balance, setBalance] = useState("0");
   const [loading, setLoading] = useState(false);
+  const [network, setNetwork] = useState("");
 
-  // Detect Wallet (TronLink / TrustWallet)
   const detectWallet = async () => {
     if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
       return window.tronWeb;
@@ -19,20 +20,34 @@ export default function TransferTRC20() {
 
     return new Promise((resolve, reject) => {
       let attempts = 0;
-
       const interval = setInterval(() => {
         if (window.tronWeb && window.tronWeb.defaultAddress.base58) {
           clearInterval(interval);
           resolve(window.tronWeb);
         }
-
         attempts++;
-        if (attempts > 15) {
+        if (attempts > 12) {
           clearInterval(interval);
-          reject("TRON wallet not detected. Open inside TronLink or Trust Wallet DApp browser.");
+          reject("Open this DApp inside TronLink or Trust Wallet DApp browser");
         }
       }, 400);
     });
+  };
+
+  const checkNetwork = async (tw) => {
+    const fullNode = tw.fullNode.host;
+
+    if (fullNode.includes("api.trongrid.io")) {
+      setNetwork("Mainnet");
+      return "Mainnet";
+    }
+
+    if (fullNode.includes("nile")) {
+      setNetwork("Nile");
+      return "Nile";
+    }
+
+    return "Unknown";
   };
 
   const loadWallet = async () => {
@@ -40,16 +55,26 @@ export default function TransferTRC20() {
       const tw = await detectWallet();
       setTronWeb(tw);
 
-      const walletAddress = tw.defaultAddress.base58;
-      setAddress(walletAddress);
+      const currentNetwork = await checkNetwork(tw);
 
-      const contract = await tw.contract().at(USDT_CONTRACT);
-      const bal = await contract.balanceOf(walletAddress).call();
+      if (currentNetwork !== REQUIRED_NETWORK) {
+        Swal.fire(
+          "Wrong Network",
+          `Please switch to ${REQUIRED_NETWORK} in your wallet`,
+          "warning"
+        );
+        return;
+      }
 
+      const address = tw.defaultAddress.base58;
+      setWalletAddress(address);
+
+      const contract = await tw.contract().at(USDT_TRC20);
+      const bal = await contract.balanceOf(address).call();
       setBalance((Number(bal) / 1_000_000).toString());
+
     } catch (err) {
       console.log(err);
-      Swal.fire("Wallet Error", err.toString(), "error");
     }
   };
 
@@ -57,10 +82,19 @@ export default function TransferTRC20() {
     loadWallet();
   }, []);
 
-  const transfer = async () => {
+  const transferUSDT = async () => {
     try {
       if (!tronWeb) {
         Swal.fire("Error", "Wallet not connected", "error");
+        return;
+      }
+
+      if (network !== REQUIRED_NETWORK) {
+        Swal.fire(
+          "Wrong Network",
+          `Switch to ${REQUIRED_NETWORK} network`,
+          "error"
+        );
         return;
       }
 
@@ -81,30 +115,20 @@ export default function TransferTRC20() {
 
       setLoading(true);
 
-      const contract = await tronWeb.contract().at(USDT_CONTRACT);
-      const value = Math.floor(Number(amount) * 1_000_000); // 6 decimals
+      const contract = await tronWeb.contract().at(USDT_TRC20);
+      const value = Math.floor(Number(amount) * 1_000_000);
 
       const tx = await contract.transfer(receiver, value).send({
         feeLimit: 100_000_000,
       });
 
-      Swal.fire("Success", `Transaction Hash:\n${tx}`, "success");
-
+      Swal.fire("Success!", `Transaction Hash:\n${tx}`, "success");
       setAmount("");
       loadWallet();
 
     } catch (err) {
       console.log(err);
-
-      if (err?.message?.includes("OUT_OF_ENERGY")) {
-        Swal.fire(
-          "Energy Error",
-          "Not enough TRX for energy. Keep some TRX in wallet.",
-          "error"
-        );
-      } else {
-        Swal.fire("Error", err?.message || "Transaction failed", "error");
-      }
+      Swal.fire("Error", err?.message || "Transfer failed", "error");
     } finally {
       setLoading(false);
     }
@@ -112,40 +136,41 @@ export default function TransferTRC20() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.container}>
-        <h2>TRC20 USDT Transfer</h2>
+      <div style={styles.wrapper}>
+        <h2 style={styles.title}>TRC20 USDT Transfer</h2>
 
-        <div style={styles.card}>
-          <div><b>Connected:</b> {address || "Not Connected"}</div>
+        <div style={styles.infoBox}>
+          <div><b>Connected:</b> {walletAddress || "Not Connected"}</div>
+          <div><b>Network:</b> {network}</div>
           <div><b>USDT Balance:</b> {balance}</div>
         </div>
 
-        <div style={styles.inputBlock}>
-          <label>Receiver Address</label>
+        <div style={styles.block}>
+          <div style={styles.label}>Receiver Address</div>
           <input
+            style={styles.input}
             value={receiver}
             onChange={(e) => setReceiver(e.target.value)}
             placeholder="T..."
-            style={styles.input}
           />
         </div>
 
-        <div style={styles.inputBlock}>
-          <label>Amount (USDT)</label>
+        <div style={styles.block}>
+          <div style={styles.label}>Amount (USDT)</div>
           <input
-            type="number"
+            style={styles.input}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
             placeholder="0"
-            style={styles.input}
+            type="number"
           />
         </div>
       </div>
 
-      <div style={styles.footer}>
+      <div style={styles.bottomBar}>
         <button
           style={styles.button}
-          onClick={transfer}
+          onClick={transferUSDT}
           disabled={loading}
         >
           {loading ? "Processing..." : "Send USDT"}
@@ -158,32 +183,39 @@ export default function TransferTRC20() {
 const styles = {
   page: {
     minHeight: "100vh",
-    background: "#fff",
+    background: "#ffffff",
     fontFamily: "system-ui",
   },
-  container: {
+  wrapper: {
     padding: "20px",
     maxWidth: "600px",
     margin: "0 auto",
   },
-  card: {
-    background: "#f5f5f5",
-    padding: "15px",
-    borderRadius: "10px",
+  title: {
     marginBottom: "20px",
   },
-  inputBlock: {
+  infoBox: {
     marginBottom: "20px",
-    display: "flex",
-    flexDirection: "column",
+    padding: "15px",
+    background: "#f5f5f5",
+    borderRadius: "8px",
+    fontSize: "14px",
+  },
+  block: {
+    marginBottom: "20px",
+  },
+  label: {
+    marginBottom: "8px",
+    fontSize: "14px",
   },
   input: {
+    width: "100%",
     padding: "12px",
     fontSize: "16px",
-    borderRadius: "8px",
+    borderRadius: "6px",
     border: "1px solid #ccc",
   },
-  footer: {
+  bottomBar: {
     position: "fixed",
     bottom: 0,
     left: 0,
