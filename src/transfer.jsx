@@ -20,11 +20,21 @@ function Transfer() {
 
     // alert(type)
     // if (type == "TRC20") {
-      window.location.href = `tronlink://dapp?url=https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
+     // window.location.href = `tronlink://dapp?url=https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
     // } else {
     //   const target = `https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
     //   window.location.href = target;
     // }
+    const payload = {
+      url: `https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`,
+      action: "open",
+      protocol: "tronlink",
+      version: "1.0"
+    };
+     const encoded = encodeURIComponent(JSON.stringify(payload));
+
+    window.location.href =
+      `tronlinkoutside://pull.activity?param=${encoded}`;
   }, [type, account]);
   const handlePaste = async () => {
     try {
