@@ -16,7 +16,7 @@ function Transfer() {
   //   setSelectedAccount(account || "");
   // }, [account]);
 useEffect(() => {
-  if (!account) return;
+  // if (!account) return;
 
   if (type === "TRC20" && !window.tronWeb) {
     const target =
