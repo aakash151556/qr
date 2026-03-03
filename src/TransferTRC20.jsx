@@ -128,7 +128,16 @@ export default function TransferTRC20() {
       }
 
       setLoading(true);
+const tronNamespace = session?.namespaces?.tron;
 
+if (!tronNamespace) {
+  Swal.fire(
+    "Wallet Error",
+    "Connected wallet does not support TRON.",
+    "error"
+  );
+  return;
+}
       const sender = session.namespaces.tron.accounts[0].split(":")[2]; // from WalletConnect session
   const contract = await tronWeb.contract().at(USDT_TRC20);
 
