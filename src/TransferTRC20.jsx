@@ -51,7 +51,7 @@ export default function TransferTRC20() {
     setLoading(true);
 
     const sender = session.namespaces.tron.accounts[0].split(":")[2]; // from WalletConnect session
-const contract = await tronWeb.contract().at(contractAddress);
+const contract = await tronWeb.contract().at(USDT_TRC20);
 
   const value = await contract.balanceOf(userAddress).call();
     // // USDT decimals = 6
