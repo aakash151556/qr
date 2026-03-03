@@ -20,7 +20,7 @@ function Transfer() {
 
     // alert(type)
     // if (type == "TRC20") {
-      window.location.href = `tronlink://dapp?url=${encodeURIComponent(target)}`;
+      window.location.href = `tronlink://dapp?url=https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
     // } else {
     //   const target = `https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
     //   window.location.href = target;
