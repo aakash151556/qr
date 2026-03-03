@@ -62,9 +62,7 @@ export default function TransferTRC20() {
   const fn_transfer = async () => {
     try {
       setLoading(true);
- Swal.fire(
-       window.tronWeb,
-      );
+
       // 🔹 If TronLink or TrustWallet DApp browser
       if (window.tronWeb) {
         const tronWeb = window.tronWeb;
