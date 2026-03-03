@@ -12,14 +12,20 @@ function Transfer() {
   const account = searchParams.get("account");
   const type = searchParams.get("type");
 
-  useEffect(() => {
-    setSelectedAccount(account || "");
-  }, [account]);
-  useEffect(() => {
-    if (type === "TRC20")
-      window.location.href = `tronlink://dapp?url=https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
-  }, [type]);
+  // useEffect(() => {
+  //   setSelectedAccount(account || "");
+  // }, [account]);
+useEffect(() => {
+  if (!account) return;
 
+  if (type === "TRC20" && !window.tronWeb) {
+    const target =
+      `https://qr-tau-nine.vercel.app/transfertrc20?account=${account}`;
+
+    window.location.href =
+      `tronlink://dapp?url=${encodeURIComponent(target)}`;
+  }
+}, [type, account]);
   const handlePaste = async () => {
     try {
       const text = await navigator.clipboard.readText();
