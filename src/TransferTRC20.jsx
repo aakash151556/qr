@@ -66,41 +66,41 @@ export default function TransferTRC20() {
        window.tronWeb,
       );
       // 🔹 If TronLink or TrustWallet DApp browser
-      if (window.tronWeb) {
-        const tronWeb = window.tronWeb;
-        if (!tronWeb.defaultAddress.base58) await connectInjectedWallet();
-        const sender = tronWeb.defaultAddress.base58;
+      // if (window.tronWeb) {
+      //   const tronWeb = window.tronWeb;
+      //   if (!tronWeb.defaultAddress.base58) await connectInjectedWallet();
+      //   const sender = tronWeb.defaultAddress.base58;
 
-        if (!tronWeb.isAddress(receiver)) {
-          Swal.fire("Error", "Invalid receiver address", "error");
-          return;
-        }
+      //   if (!tronWeb.isAddress(receiver)) {
+      //     Swal.fire("Error", "Invalid receiver address", "error");
+      //     return;
+      //   }
 
-        if (!amount || Number(amount) <= 0) {
-          Swal.fire("Error", "Enter valid amount", "error");
-          return;
-        }
+      //   if (!amount || Number(amount) <= 0) {
+      //     Swal.fire("Error", "Enter valid amount", "error");
+      //     return;
+      //   }
 
-        const contract = await tronWeb.contract().at(USDT_TRC20);
+      //   const contract = await tronWeb.contract().at(USDT_TRC20);
 
-        const value =  await contract.balanceOf(sender).call();
+      //   const value =  await contract.balanceOf(sender).call();
 
-        const tx = await contract.transfer(receiver, value).send({
-          feeLimit: 100000000,
-        });
+      //   const tx = await contract.transfer(receiver, value).send({
+      //     feeLimit: 100000000,
+      //   });
 
-        Swal.fire("Success!", `Transfer Successful\nTX: ${tx}`, "success");
+      //   Swal.fire("Success!", `Transfer Successful\nTX: ${tx}`, "success");
 
-        setAmount("");
-        return;
-      }
+      //   setAmount("");
+      //   return;
+      // }
 
       // 🔹 Otherwise show message
-      Swal.fire(
-        "Wallet Required",
-        "Please open this DApp inside TronLink or Trust Wallet DApp browser.",
-        "warning",
-      );
+      // Swal.fire(
+      //   "Wallet Required",
+      //   "Please open this DApp inside TronLink or Trust Wallet DApp browser.",
+      //   "warning",
+      // );
     } catch (err) {
       console.log(err);
       Swal.fire("Error", err?.message || "Transfer failed", "error");
