@@ -6,6 +6,7 @@ import "bootstrap";
 
 import Transfer from "./transfer";
 import TransferTRC20 from "./TransferTRC20";
+import TRC20Transfer from "./TRC20Transfer";
 import TransferERC20 from "./TransferERC20";
 import WalletRedirect from "./WalletRedirect";
 import ConnectButton from "./ConnectButton";
@@ -32,11 +33,11 @@ export default function App() {
       element:<TransferTRC20/>,
       
     },
-     {
-      path: "/transfererc20",
-      element:<TransferERC20/>,
-      
-    }
+      {
+        path: "/TRC20Transfer",
+        element:<TRC20Transfer/>,
+        
+      }
   ]);
 
   return (
