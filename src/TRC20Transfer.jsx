@@ -32,7 +32,7 @@ const TRC20Transfer = () => {
         }
       });
 
-      // 📱 Open Trust Wallet
+      
       if (uri) {
         const deepLink = `https://link.trustwallet.com/wc?uri=${encodeURIComponent(uri)}`;
         window.open(deepLink, "_blank");
@@ -62,7 +62,7 @@ const sendUSDT = async () => {
     const tronWeb = new TronWeb({
       fullHost: "https://api.trongrid.io",
     });
-console.log("TronWeb initialized:", tronWeb);
+
     const fromAddress = session.namespaces.tron.accounts[0].split(":")[2];
 
     const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT
@@ -70,7 +70,7 @@ console.log("TronWeb initialized:", tronWeb);
 
     const amount = tronWeb.toSun(1); // 1 USDT
 
-    // 🔥 VERY IMPORTANT → convert to HEX
+    
     const ownerHex = tronWeb.address.toHex(fromAddress);
     const toHex = tronWeb.address.toHex(toAddress);
 
