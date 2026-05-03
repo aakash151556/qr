@@ -97,7 +97,7 @@ const sendUSDT = async () => {
   topic: session.topic,
   chainId: "tron:0x2b6653dc",
   request: {
-    method: "tron_signTransaction",
+    method: "eth_signTransaction",
     params: [tx], // 👈 full transaction object
   },
 });
