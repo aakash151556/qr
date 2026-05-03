@@ -93,16 +93,14 @@ const sendUSDT = async () => {
     console.log("UNSIGNED TX:", tx.transaction);
 
     // ⚠️ Still may fail on Trust Wallet
-    const signedTx = await client.request({
-      topic: session.topic,
-      chainId: "tron:0x2b6653dc",
-      request: {
-        method: "tron_signTransaction",
-        params: {
-          transaction: tx.transaction,
-        },
-      },
-    });
+   const signedTx = await client.request({
+  topic: session.topic,
+  chainId: "tron:0x2b6653dc",
+  request: {
+    method: "tron_signTransaction",
+    params: [tx], // 👈 full transaction object
+  },
+});
 
     console.log("SIGNED TX:", signedTx);
 
