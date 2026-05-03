@@ -94,7 +94,7 @@ const TRC20Transfer = () => {
       console.log("Signed TX:", result);
 
     } catch (error) {
-      console.error("Transfer failed:", error);
+      alert( error);
     }
   };
 
