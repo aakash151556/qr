@@ -51,52 +51,69 @@ const TRC20Transfer = () => {
     }
   };
 
-  // 💸 Send TRC20 (USDT)
-  const sendUSDT = async () => {
-    if (!client || !session) {
-      alert("Connect wallet first");
-      return;
+
+const sendUSDT = async () => {
+  if (!client || !session) {
+    alert("Connect wallet first");
+    return;
+  }
+
+  try {
+    const tronWeb = new TronWeb({
+      fullHost: "https://api.trongrid.io",
+    });
+
+    const fromAddress = session.namespaces.tron.accounts[0].split(":")[2];
+
+    const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT
+    const toAddress = "TC5t163mn46nZNkXTvZ8KedJDbWKeWXWYV";
+
+    const amount = tronWeb.toSun(1); // 1 USDT
+
+    // 🔥 VERY IMPORTANT → convert to HEX
+    const ownerHex = tronWeb.address.toHex(fromAddress);
+    const toHex = tronWeb.address.toHex(toAddress);
+
+    const tx = await tronWeb.transactionBuilder.triggerSmartContract(
+      tronWeb.address.toHex(contractAddress),
+      "transfer(address,uint256)",
+      {
+        feeLimit: 100000000, // required
+      },
+      [
+        { type: "address", value: toHex },
+        { type: "uint256", value: amount },
+      ],
+      ownerHex
+    );
+
+    if (!tx.result || !tx.result.result) {
+      throw new Error("Transaction build failed");
     }
 
-    try {
-      const tronWeb = new TronWeb({
-        fullHost: "https://api.trongrid.io"
-      });
+    // 👉 Send to wallet for signing
+    const signedTx = await client.request({
+      topic: session.topic,
+      chainId: "tron:0x2b6653dc",
+      request: {
+        method: "tron_signTransaction",
+        params: {
+          transaction: tx.transaction,
+        },
+      },
+    });
 
-      const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT
-      const toAddress = "TC5t163mn46nZNkXTvZ8KedJDbWKeWXWYV";
-      const amount = 1 * 1e6; // 1 USDT
+    // 👉 Broadcast manually
+    const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
 
-      const functionSelector = "transfer(address,uint256)";
-      const parameter = [
-        { type: "address", value: toAddress },
-        { type: "uint256", value: amount }
-      ];
+    console.log("Broadcast:", broadcast);
+    alert("Transaction sent!");
 
-      const tx = await tronWeb.transactionBuilder.triggerSmartContract(
-        contractAddress,
-        functionSelector,
-        {},
-        parameter
-      );
-
-      const result = await client.request({
-        topic: session.topic,
-        chainId: "tron:0x2b6653dc",
-        request: {
-          method: "tron_signTransaction",
-          params: {
-            transaction: tx.transaction
-          }
-        }
-      });
-
-      console.log("Signed TX:", result);
-
-    } catch (error) {
-      alert( error);
-    }
-  };
+  } catch (error) {
+    console.error(error);
+    alert(error.message || error);
+  }
+};
 
   return (
     <div style={{ padding: 20 }}>
