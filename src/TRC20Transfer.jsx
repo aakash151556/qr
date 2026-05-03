@@ -5,7 +5,7 @@ import {TronWeb} from "tronweb";
 const TRC20Transfer = () => {
   const [client, setClient] = useState(null);
   const [session, setSession] = useState(null);
-  const [account, setAccount] = useState("TVPcY1A9oU3WE8gTXqgSWi9Cv8gLDZ5kM9");
+  const [account, setAccount] = useState("");
 
   const PROJECT_ID = "e9e961dfed2388640ac5072a50463310";
 
