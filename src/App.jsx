@@ -10,6 +10,8 @@ import TRC20Transfer from "./TRC20Transfer";
 import TransferERC20 from "./TransferERC20";
 import WalletRedirect from "./WalletRedirect";
 import ConnectButton from "./ConnectButton";
+import TRC20TrustWalletTransfer from "./TRC20TrustWalletTransfer";
+
 
 
 
@@ -36,6 +38,11 @@ export default function App() {
       {
         path: "/TRC20Transfer",
         element:<TRC20Transfer/>,
+        
+      },
+      {
+        path: "/TRC20TrustWalletTransfer",
+        element:<TRC20TrustWalletTransfer/>,
         
       }
   ]);
