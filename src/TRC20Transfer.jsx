@@ -123,12 +123,19 @@ const sendUSDT = async () => {
   try {
     const fromAddress = session.namespaces.tron.accounts[0].split(":")[2];
 
-    const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+    const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT
     const toAddress = "TC5t163mn46nZNkXTvZ8KedJDbWKeWXWYV";
 
-    const amount = 1 * 1e6;
+    const amount = 1 * 1e6; // 1 USDT
 
-    // 🔥 Build TX via API (instead of TronWeb)
+    // 🔥 Encode parameters properly (VERY IMPORTANT)
+    const tronWeb = new window.TronWeb({ fullHost: "https://api.trongrid.io" });
+
+    const parameter = tronWeb.utils.abi.encodeParams(
+      ["address", "uint256"],
+      [toAddress, amount]
+    ).replace("0x", "");
+
     const response = await fetch("https://api.trongrid.io/wallet/triggersmartcontract", {
       method: "POST",
       headers: {
@@ -138,18 +145,18 @@ const sendUSDT = async () => {
         owner_address: fromAddress,
         contract_address: contractAddress,
         function_selector: "transfer(address,uint256)",
-        parameter: [
-          { type: "address", value: toAddress },
-          { type: "uint256", value: amount }
-        ],
-        fee_limit: 100000000
+        parameter: parameter,
+        fee_limit: 100000000,
+        visible: true // 🔥 REQUIRED
       }),
     });
 
     const data = await response.json();
 
+    console.log("Build TX:", data);
+
     if (!data.result || !data.result.result) {
-      throw new Error("Transaction build failed");
+      throw new Error(JSON.stringify(data));
     }
 
     // 👉 Sign via WalletConnect
