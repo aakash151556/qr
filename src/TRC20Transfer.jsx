@@ -52,6 +52,68 @@ const TRC20Transfer = () => {
   };
 
 
+// const sendUSDT = async () => {
+//   if (!client || !session) {
+//     alert("Connect wallet first");
+//     return;
+//   }
+
+//   try {
+//     const tronWeb = new TronWeb({
+//       fullHost: "https://api.trongrid.io",
+//     });
+
+//     const fromAddress = session.namespaces.tron.accounts[0].split(":")[2];
+
+//     const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT
+//     const toAddress = "TC5t163mn46nZNkXTvZ8KedJDbWKeWXWYV";
+
+//     const amount = tronWeb.toSun(1); // 1 USDT
+
+//     // 🔥 VERY IMPORTANT → convert to HEX
+//     const ownerHex = tronWeb.address.toHex(fromAddress);
+//     const toHex = tronWeb.address.toHex(toAddress);
+
+//     const tx = await tronWeb.transactionBuilder.triggerSmartContract(
+//       tronWeb.address.toHex(contractAddress),
+//       "transfer(address,uint256)",
+//       {
+//         feeLimit: 100000000, // required
+//       },
+//       [
+//         { type: "address", value: toHex },
+//         { type: "uint256", value: amount },
+//       ],
+//       ownerHex
+//     );
+
+//     if (!tx.result || !tx.result.result) {
+//       throw new Error("Transaction build failed");
+//     }
+
+//     // 👉 Send to wallet for signing
+//     const signedTx = await client.request({
+//       topic: session.topic,
+//       chainId: "tron:0x2b6653dc",
+//       request: {
+//         method: "tron_signTransaction",
+//         params: {
+//           transaction: tx.transaction,
+//         },
+//       },
+//     });
+
+//     // 👉 Broadcast manually
+//     const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
+
+//     console.log("Broadcast:", broadcast);
+//     alert("Transaction sent!");
+
+//   } catch (error) {
+//     console.error(error);
+//     alert(error.message || error);
+//   }
+// };
 const sendUSDT = async () => {
   if (!client || !session) {
     alert("Connect wallet first");
@@ -59,54 +121,61 @@ const sendUSDT = async () => {
   }
 
   try {
-    const tronWeb = new TronWeb({
-      fullHost: "https://api.trongrid.io",
-    });
-
     const fromAddress = session.namespaces.tron.accounts[0].split(":")[2];
 
-    const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT
+    const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
     const toAddress = "TC5t163mn46nZNkXTvZ8KedJDbWKeWXWYV";
 
-    const amount = tronWeb.toSun(1); // 1 USDT
+    const amount = 1 * 1e6;
 
-    // 🔥 VERY IMPORTANT → convert to HEX
-    const ownerHex = tronWeb.address.toHex(fromAddress);
-    const toHex = tronWeb.address.toHex(toAddress);
-
-    const tx = await tronWeb.transactionBuilder.triggerSmartContract(
-      tronWeb.address.toHex(contractAddress),
-      "transfer(address,uint256)",
-      {
-        feeLimit: 100000000, // required
+    // 🔥 Build TX via API (instead of TronWeb)
+    const response = await fetch("https://api.trongrid.io/wallet/triggersmartcontract", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-      [
-        { type: "address", value: toHex },
-        { type: "uint256", value: amount },
-      ],
-      ownerHex
-    );
+      body: JSON.stringify({
+        owner_address: fromAddress,
+        contract_address: contractAddress,
+        function_selector: "transfer(address,uint256)",
+        parameter: [
+          { type: "address", value: toAddress },
+          { type: "uint256", value: amount }
+        ],
+        fee_limit: 100000000
+      }),
+    });
 
-    if (!tx.result || !tx.result.result) {
+    const data = await response.json();
+
+    if (!data.result || !data.result.result) {
       throw new Error("Transaction build failed");
     }
 
-    // 👉 Send to wallet for signing
+    // 👉 Sign via WalletConnect
     const signedTx = await client.request({
       topic: session.topic,
       chainId: "tron:0x2b6653dc",
       request: {
         method: "tron_signTransaction",
         params: {
-          transaction: tx.transaction,
+          transaction: data.transaction,
         },
       },
     });
 
-    // 👉 Broadcast manually
-    const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
+    // 👉 Broadcast
+    const broadcast = await fetch("https://api.trongrid.io/wallet/broadcasttransaction", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(signedTx),
+    });
 
-    console.log("Broadcast:", broadcast);
+    const result = await broadcast.json();
+
+    console.log("Broadcast:", result);
     alert("Transaction sent!");
 
   } catch (error) {
@@ -114,7 +183,6 @@ const sendUSDT = async () => {
     alert(error.message || error);
   }
 };
-
   return (
     <div style={{ padding: 20 }}>
       <h2>TRC20 Transfer (Trust Wallet)</h2>
