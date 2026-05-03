@@ -1,16 +1,22 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { nodePolyfills } from 'vite-plugin-node-polyfills'  // ✅ FIXED
+import { nodePolyfills } from 'vite-plugin-node-polyfills'
 
 export default defineConfig({
   plugins: [
     react(),
-    nodePolyfills(), // ✅ correct usage
+    nodePolyfills(),
   ],
   define: {
     global: 'globalThis',
   },
   optimizeDeps: {
     include: ['tronweb'],
+  },
+  resolve: {
+    alias: {
+      buffer: 'buffer',
+      process: 'process/browser',
+    },
   },
 })
