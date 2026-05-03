@@ -101,6 +101,7 @@ const sendUSDT = async () => {
 //     params: [tx], // 👈 full transaction object
 //   },
 // });
+const txID = tx.txID;
 const res = await client.request({
   topic: session.topic,
   chainId: "tron:0x2b6653dc",
