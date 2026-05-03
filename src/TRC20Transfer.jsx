@@ -1,133 +1,108 @@
-import React, { useState } from "react";
-import SignClient from "@walletconnect/sign-client";
-import {TronWeb} from "tronweb";
+import React, { useEffect, useState } from "react";
 
 const TRC20Transfer = () => {
-  const [client, setClient] = useState(null);
-  const [session, setSession] = useState(null);
   const [account, setAccount] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
 
-  const PROJECT_ID = "e9e961dfed2388640ac5072a50463310";
+  const CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT
+  const RECEIVER = "TC5t163mn46nZNkXTvZ8KedJDbWKeWXWYV";
 
-  // 🔌 Connect Wallet
-  const connectWallet = async () => {
+  // ✅ Detect device
+  useEffect(() => {
+    const mobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    setIsMobile(mobile);
+
+    // Desktop TronLink detection
+    if (window.tronWeb && window.tronWeb.defaultAddress?.base58) {
+      setAccount(window.tronWeb.defaultAddress.base58);
+    }
+  }, []);
+
+  // ✅ Connect TronLink (Desktop)
+  const connectTronLink = async () => {
     try {
-      const wcClient = await SignClient.init({
-        projectId: PROJECT_ID,
-        metadata: {
-          name: "TRC20 Pay",
-          description: "TRC20 Payment DApp",
-          url: "https://qr-tau-nine.vercel.app/TRC20Transfer",
-          icons: []
-        }
-      });
-
-      const { uri, approval } = await wcClient.connect({
-        requiredNamespaces: {
-          tron: {
-            methods: ["tron_signTransaction"],
-            chains: ["tron:0x2b6653dc"], // TRON mainnet
-            events: []
-          }
-        }
-      });
-
-      
-      if (uri) {
-        const deepLink = `https://link.trustwallet.com/wc?uri=${encodeURIComponent(uri)}`;
-        window.open(deepLink, "_blank");
+      if (!window.tronLink) {
+        alert("Please install TronLink");
+        return;
       }
 
-      const session = await approval();
-      setClient(wcClient);
-      setSession(session);
+      await window.tronLink.request({ method: "tron_requestAccounts" });
 
-      const acc = session.namespaces.tron.accounts[0];
-      const address = acc.split(":")[2];
-      setAccount(address);
-
+      if (window.tronWeb?.defaultAddress?.base58) {
+        setAccount(window.tronWeb.defaultAddress.base58);
+      }
     } catch (err) {
-      console.error("Connection error:", err);
+      console.error(err);
     }
   };
 
+  // ✅ Mobile Transfer (Trust Wallet Deep Link)
+  const sendUSDTMobile = () => {
+    const amount = 1;
 
-const sendUSDT = async () => {
-  if (!client || !session) {
-    alert("Connect wallet first");
-    return;
-  }
+    const url = `https://link.trustwallet.com/send?coin_id=195&address=${RECEIVER}&amount=${amount}&contract_address=${CONTRACT}`;
 
-  try {
-    const tronWeb = new TronWeb({
-      fullHost: "https://api.trongrid.io",
-    });
+    window.location.href = url;
+  };
 
-    const fromAddress = session.namespaces.tron.accounts[0].split(":")[2];
+  // ✅ Desktop Transfer (TronLink)
+  const sendUSDTDesktop = async () => {
+    try {
+      if (!window.tronWeb || !window.tronWeb.defaultAddress.base58) {
+        alert("Connect TronLink first");
+        return;
+      }
 
-    const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t"; // USDT
-    const toAddress = "TC5t163mn46nZNkXTvZ8KedJDbWKeWXWYV";
+      const tronWeb = window.tronWeb;
 
-    const amount = tronWeb.toSun(1); // 1 USDT
+      const contract = await tronWeb.contract().at(CONTRACT);
 
-    
-    const ownerHex = tronWeb.address.toHex(fromAddress);
-    const toHex = tronWeb.address.toHex(toAddress);
+      const tx = await contract
+        .transfer(RECEIVER, tronWeb.toSun(1)) // 1 USDT
+        .send();
 
-    const tx = await tronWeb.transactionBuilder.triggerSmartContract(
-      tronWeb.address.toHex(contractAddress),
-      "transfer(address,uint256)",
-      {
-        feeLimit: 100000000, // required
-      },
-      [
-        { type: "address", value: toHex },
-        { type: "uint256", value: amount },
-      ],
-      ownerHex
-    );
-
-    if (!tx.result || !tx.result.result) {
-      throw new Error("Transaction build failed");
+      console.log("TX:", tx);
+      alert("Transaction sent!");
+    } catch (err) {
+      console.error(err);
+      alert(err.message || "Transaction failed");
     }
+  };
 
-    // 👉 Send to wallet for signing
-    const signedTx = await client.request({
-      topic: session.topic,
-      chainId: "tron:0x2b6653dc",
-      request: {
-        method: "tron_signTransaction",
-        params: {
-          transaction: tx.transaction,
-        },
-      },
-    });
-
-    // 👉 Broadcast manually
-    const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
-
-    console.log("Broadcast:", broadcast);
-    alert("Transaction sent!");
-
-  } catch (error) {
-    console.error(error);
-    alert(error.message || error);
-  }
-};
+  // ✅ Unified handler
+  const sendUSDT = () => {
+    if (isMobile) {
+      sendUSDTMobile();
+    } else {
+      sendUSDTDesktop();
+    }
+  };
 
   return (
     <div style={{ padding: 20 }}>
-      <h2>TRC20 Transfer (Trust Wallet)</h2>
+      <h2>TRC20 USDT Transfer</h2>
 
-      {!account ? (
-        <button onClick={connectWallet}>Connect Trust Wallet</button>
-      ) : (
-        <p>Connected: {account}</p>
+      {!isMobile && (
+        <>
+          {!account ? (
+            <button onClick={connectTronLink}>
+              Connect TronLink
+            </button>
+          ) : (
+            <p>Connected: {account}</p>
+          )}
+        </>
       )}
 
-      <button onClick={sendUSDT} disabled={!account}>
+      <button onClick={sendUSDT} style={{ marginTop: 20 }}>
         Send 1 USDT
       </button>
+
+      {isMobile && (
+        <p style={{ marginTop: 10 }}>
+          Mobile: Opens Trust Wallet automatically
+        </p>
+      )}
     </div>
   );
 };
