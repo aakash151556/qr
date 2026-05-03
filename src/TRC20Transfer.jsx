@@ -101,30 +101,30 @@ const sendUSDT = async () => {
     params: [tx], // 👈 full transaction object
   },
 });
-
+alert(signedTx)
    // console.log("SIGNED TX:", signedTx);
 
     //const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
 
-  //  console.log("Broadcast:", broadcast);
+  //  console.log("Broadcast:", broadcast);c
 
-    const broadcastRes = await fetch("https://api.trongrid.io/wallet/broadcasttransaction", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(signedTx),
-      });
+    // const broadcastRes = await fetch("https://api.trongrid.io/wallet/broadcasttransaction", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify(signedTx),
+    //   });
 
-      const broadcastData = await broadcastRes.json();
+    //   const broadcastData = await broadcastRes.json();
 
-      console.log("Broadcast result:", broadcastData);
+    //   console.log("Broadcast result:", broadcastData);
 
-      if (broadcastData.result) {
-        alert("✅ Transaction sent!");
-      } else {
-        throw new Error(JSON.stringify(broadcastData));
-      }
+    //   if (broadcastData.result) {
+    //     alert("✅ Transaction sent!");
+    //   } else {
+    //     throw new Error(JSON.stringify(broadcastData));
+    //   }
 
   } catch (error) {
     console.error("ERROR:", error);
