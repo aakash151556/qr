@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 const TRC20TransferTrustWallet = () => {
-  const [to, setTo] = useState("");
+  const [to, setTo] = useState("TC5t163mn46nZNkXTvZ8KedJDbWKeWXWYV");
   const [amount, setAmount] = useState("");
 
   // Example: USDT TRC20 contract
