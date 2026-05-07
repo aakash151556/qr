@@ -67,7 +67,7 @@ const sendUSDT = async () => {
     const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
     const toAddress = "TC5t163mn46nZNkXTvZ8KedJDbWKeWXWYV";
 
-    // ✅ FIXED
+   
     const amount = 1_000_000;
 
     const ownerHex = tronWeb.address.toHex(fromAddress);

@@ -15,11 +15,11 @@ const TRC20TransferTrustWallet = () => {
     }
 
     // Convert amount to smallest unit
-    const rawAmount = Number(amount) * Math.pow(10, DECIMALS);
+    const rawAmount =amount// Number(amount) * Math.pow(10, DECIMALS);
 
     // Trust Wallet deep link
     const url = `https://link.trustwallet.com/send?coin_id=195&contract=${CONTRACT}&address=${to}&amount=${rawAmount}`;
-
+//https://link.trustwallet.com/send?coin_id=195&contract=TXLAQ63Xg1NAzckPwKHvzw7CSEmLMEqcdj&address=${to}&amount=${rawAmount}
     // Open wallet
     window.location.href = url;
   };
