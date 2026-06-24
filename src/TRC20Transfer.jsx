@@ -1,161 +1,203 @@
 import React, { useState } from "react";
 import SignClient from "@walletconnect/sign-client";
-import {TronWeb} from "tronweb";
+import { WalletConnectModal } from "@walletconnect/modal";
+import { TronWeb } from "tronweb";
 
-const TRC20Transfer = () => {
+export default function TRC20Transfer() {
   const [client, setClient] = useState(null);
   const [session, setSession] = useState(null);
   const [account, setAccount] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const PROJECT_ID = "e9e961dfed2388640ac5072a50463310";
 
-  // 🔌 Connect Wallet
+  const USDT_CONTRACT = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
+
+  const RECEIVER = "TC5t163mn46nZNkXTvZ8KedJDbWKeWXWYV";
+
   const connectWallet = async () => {
     try {
+      setLoading(true);
+
       const wcClient = await SignClient.init({
         projectId: PROJECT_ID,
         metadata: {
           name: "TRC20 Pay",
           description: "TRC20 Payment DApp",
-          url: "https://qr-tau-nine.vercel.app/TRC20Transfer",
-          icons: []
-        }
+          url: window.location.origin,
+          icons: [],
+        },
       });
-
+      const modal = new WalletConnectModal({
+        projectId: PROJECT_ID,
+      });
       const { uri, approval } = await wcClient.connect({
         requiredNamespaces: {
           tron: {
             methods: ["tron_signTransaction"],
-            chains: ["tron:0x2b6653dc"], // TRON mainnet
-            events: []
-          }
-        }
+            chains: ["tron:0x2b6653dc"],
+            events: [],
+          },
+        },
       });
 
-      
       if (uri) {
-        const deepLink = `https://link.trustwallet.com/wc?uri=${encodeURIComponent(uri)}`;
-        window.open(deepLink, "_blank");
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+        if (isMobile) {
+          window.location.href = `https://link.trustwallet.com/wc?uri=${encodeURIComponent(
+            uri,
+          )}`;
+        } else {
+          await modal.openModal({
+            uri,
+          });
+        }
       }
 
-      const session = await approval();
+      const approvedSession = await approval();
+
       setClient(wcClient);
-      setSession(session);
+      setSession(approvedSession);
 
-      const acc = session.namespaces.tron.accounts[0];
-      const address = acc.split(":")[2];
-      setAccount(address);
+      const acc = approvedSession.namespaces.tron.accounts[0];
 
+      const walletAddress = acc.split(":")[2];
+
+      setAccount(walletAddress);
+
+      console.log("Connected:", walletAddress);
     } catch (err) {
-      console.error("Connection error:", err);
+      console.error(err);
+      alert(err.message || "Connection failed");
+    } finally {
+      setLoading(false);
     }
   };
 
-const sendUSDT = async () => {
-  if (!client || !session) {
-    alert("Connect wallet first");
-    return;
-  }
-
-  try {
-    const tronWeb = new TronWeb({
-      fullHost: "https://api.trongrid.io",
-    });
-
-    const fromAddress = session.namespaces.tron.accounts[0].split(":")[2];
-
-    const contractAddress = "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t";
-    const toAddress = "TC5t163mn46nZNkXTvZ8KedJDbWKeWXWYV";
-
-   
-    const amount = 1_000_000;
-
-    const ownerHex = tronWeb.address.toHex(fromAddress);
-    const toHex = tronWeb.address.toHex(toAddress);
-
-    const tx = await tronWeb.transactionBuilder.triggerSmartContract(
-      tronWeb.address.toHex(contractAddress),
-      "transfer(address,uint256)",
-      {
-        feeLimit: 100_000_000,
-      },
-      [
-        { type: "address", value: toHex },
-        { type: "uint256", value: amount },
-      ],
-      ownerHex
-    );
-
-    if (!tx.result?.result) {
-      throw new Error("Transaction build failed");
+  const sendUSDT = async () => {
+    if (!client || !session) {
+      alert("Connect wallet first");
+      return;
     }
 
-    console.log("UNSIGNED TX:", tx.transaction);
+    try {
+      setLoading(true);
 
-    // ⚠️ Still may fail on Trust Wallet
-//    const signedTx = await client.request({
-//   topic: session.topic,
-//   chainId: "tron:0x2b6653dc",
-//   request: {
-//     method: "tron_signTransaction",
-//     params: [tx], // 👈 full transaction object
-//   },
-// });
-const txID = tx.txID;
-const res = await client.request({
-  topic: session.topic,
-  chainId: "tron:0x2b6653dc",
-  request: {
-    method: "tron_signMessage",
-    params: [txID],
-  },
-});
-alert(res)
-   // console.log("SIGNED TX:", signedTx);
+      const tronWeb = new TronWeb({
+        fullHost: "https://api.trongrid.io",
+      });
 
-    //const broadcast = await tronWeb.trx.sendRawTransaction(signedTx);
+      const fromAddress = session.namespaces.tron.accounts[0].split(":")[2];
 
-  //  console.log("Broadcast:", broadcast);c
+      const amount = 1 * 1000000; // 1 USDT
 
-    // const broadcastRes = await fetch("https://api.trongrid.io/wallet/broadcasttransaction", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify(signedTx),
-    //   });
+      const tx = await tronWeb.transactionBuilder.triggerSmartContract(
+        USDT_CONTRACT,
+        "transfer(address,uint256)",
+        {
+          feeLimit: 100000000,
+        },
+        [
+          {
+            type: "address",
+            value: RECEIVER,
+          },
+          {
+            type: "uint256",
+            value: amount,
+          },
+        ],
+        fromAddress,
+      );
 
-    //   const broadcastData = await broadcastRes.json();
+      if (!tx.result?.result) {
+        throw new Error("Transaction build failed");
+      }
 
-    //   console.log("Broadcast result:", broadcastData);
+      console.log("UNSIGNED:", tx.transaction);
 
-    //   if (broadcastData.result) {
-    //     alert("✅ Transaction sent!");
-    //   } else {
-    //     throw new Error(JSON.stringify(broadcastData));
-    //   }
+      let signedTx;
 
-  } catch (error) {
-    console.error("ERROR:", error);
-    alert(error.message || error);
-  }
-};
+      try {
+        signedTx = await client.request({
+          topic: session.topic,
+          chainId: "tron:0x2b6653dc",
+          request: {
+            method: "tron_signTransaction",
+            params: {
+              transaction: tx.transaction,
+            },
+          },
+        });
+      } catch (e) {
+        signedTx = await client.request({
+          topic: session.topic,
+          chainId: "tron:0x2b6653dc",
+          request: {
+            method: "tron_signTransaction",
+            params: [tx.transaction],
+          },
+        });
+      }
+
+      console.log("SIGNED:", signedTx);
+
+      let transactionToBroadcast;
+
+      if (signedTx?.signature && !signedTx?.raw_data) {
+        transactionToBroadcast = {
+          ...tx.transaction,
+          signature: signedTx.signature,
+        };
+      } else if (signedTx?.transaction) {
+        transactionToBroadcast = signedTx.transaction;
+      } else {
+        transactionToBroadcast = signedTx;
+      }
+
+      console.log("BROADCAST TX:", transactionToBroadcast);
+
+      const result = await tronWeb.trx.sendRawTransaction(
+        transactionToBroadcast,
+      );
+
+      console.log("BROADCAST RESULT:", result);
+
+      if (result.result) {
+        alert(`Success\nTXID: ${result.txid}`);
+      } else {
+        alert(JSON.stringify(result, null, 2));
+      }
+    } catch (err) {
+      console.error(err);
+      alert(err.message || JSON.stringify(err));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{ padding: 20 }}>
-      <h2>TRC20 Transfer (Trust Wallet)</h2>
+      <h2>Trust Wallet TRC20 Transfer</h2>
 
       {!account ? (
-        <button onClick={connectWallet}>Connect Trust Wallet</button>
+        <button onClick={connectWallet} disabled={loading}>
+          Connect Wallet
+        </button>
       ) : (
-        <p>Connected: {account}</p>
-      )}
+        <>
+          <p>
+            Connected:
+            <br />
+            {account}
+          </p>
 
-      <button onClick={sendUSDT} disabled={!account}>
-        Send 1 USDT
-      </button>
+          <button onClick={sendUSDT} disabled={loading}>
+            Send 1 USDT
+          </button>
+        </>
+      )}
     </div>
   );
-};
-
-export default TRC20Transfer;
+}
